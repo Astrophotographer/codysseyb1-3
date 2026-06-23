@@ -1,72 +1,94 @@
-# 프로젝트 1. Google Form 입력 → Google Sheets 저장 자동화
+# 프로젝트 1. Make vs n8n 자동화 도구 비교 보고서
 
 ## 1. 프로젝트 개요
 
-본 프로젝트는 사용자가 **Google Form**에 문의 내용을 입력하면 응답 데이터가 **Google Sheets**에 자동으로 누적되도록 만드는 가장 단순한 업무 자동화이다.
+본 프로젝트는 동일한 단순 업무 자동화 시나리오를 **Make**와 **n8n** 두 가지 자동화 도구로 구현하고 비교 분석한 보고서이다.
 
-복잡한 AI 분기나 메일 발송은 제외하고, 실제 현업에서 자주 필요한 “폼 응답 수집 → 스프레드시트 정리” 흐름에 집중하였다.
+사용자가 **Google Form**에 문의를 제출하면 입력값을 정리하고 **Google Sheets**에 저장한 뒤, 카테고리에 따라 **일반/긴급 처리 경로**로 분기하는 구조를 동일하게 설계하였다.
 
 ---
 
-## 2. 자동화 목표
+## 2. 공통 워크플로우 구조
 
-반복적으로 들어오는 문의 내용을 사람이 직접 복사하지 않고, Google Form 응답을 Google Sheets에 자동 저장한다.
+두 도구 모두 아래와 같은 동일한 구조를 기준으로 구현한다.
 
 ```mermaid
-flowchart LR
-    A[사용자 Google Form 입력] --> B[Google Form 응답 제출]
-    B --> C[Google Sheets에 자동 저장]
-    C --> D[담당자가 시트에서 문의 확인]
+flowchart TD
+    A[Google Form 제출] --> B[입력값 정리]
+    B --> C[Google Sheets 저장]
+    C --> D{카테고리 조건 분기}
+    D -->|일반| E[일반 알림 또는 일반 결과 기록]
+    D -->|긴급| F[긴급 알림 또는 긴급 결과 기록]
 ```
 
----
-
-## 3. 입력 항목
+### 2.1 입력 항목
 
 | 항목 | 설명 |
 |---|---|
 | 이름 | 문의자 이름 |
 | 이메일 | 문의자 이메일 주소 |
-| 카테고리 | 문의 유형 또는 구분 |
+| 카테고리 | 일반 또는 긴급 |
 | 문의내용 | 사용자가 입력한 상세 문의 내용 |
-| 제출시간 | Google Form 또는 n8n에서 자동 기록되는 시간 |
+| 제출시간 | Google Form 또는 자동화 도구에서 기록되는 시간 |
+
+### 2.2 공통 요구사항 충족 구조
+
+| 요구사항 | 구현 내용 |
+|---|---|
+| Trigger 1개 이상 | Google Form 제출 또는 Webhook Trigger |
+| Action 2개 이상 | 입력값 정리, Google Sheets 저장, 일반/긴급 결과 기록 |
+| 조건 분기 1개 이상 | 카테고리 기준 일반/긴급 분기 |
+| 각 분기 실행 확인 | 일반/긴급 테스트 요청을 각각 1회 실행하여 응답 결과 확인 |
 
 ---
 
-## 4. Google Form 구현 방식
+## 3. 사용한 도구 이름
 
-Google Form에서는 아래 항목을 질문으로 만든다.
+| 도구 | 사용 목적 |
+|---|---|
+| Google Form | 사용자 입력 화면 |
+| Google Sheets | 제출 데이터 저장 |
+| Make | SaaS 기반 자동화 시나리오 구현 및 비교 대상 |
+| n8n | 셀프호스팅 기반 자동화 워크플로우 구현 및 비교 대상 |
 
-1. 이름
-2. 이메일
-3. 카테고리
-4. 문의내용
+---
 
-Form 상단의 **응답** 탭에서 Google Sheets 아이콘을 클릭하면 응답 대상 스프레드시트를 연결할 수 있다. 이후 사용자가 폼을 제출할 때마다 시트에 새 행이 자동으로 추가된다.
+## 4. Make 구현 과정 요약
+
+Make에서는 Google Forms 또는 Google Sheets 모듈을 시작점으로 하여 시나리오를 구성한다.
 
 ```text
-Google Form
-→ 응답 탭
-→ Google Sheets 연결
-→ 제출 응답 자동 누적
+Google Form 제출 또는 Google Sheets 새 행 감지
+→ 입력값 매핑
+→ Google Sheets 행 추가/정리
+→ Router로 카테고리 조건 분기
+→ 일반/긴급 경로별 알림 또는 결과 기록
 ```
+
+### 4.1 Make 구성 포인트
+
+1. Google Form 응답을 Google Sheets에 연결한다.
+2. Make에서 Google Sheets의 새 행을 Trigger로 감지한다.
+3. 이름, 이메일, 카테고리, 문의내용 필드를 매핑한다.
+4. Router를 추가하여 카테고리가 `긴급`인지 `일반`인지 분기한다.
+5. 각 분기에서 알림 발송 또는 결과 기록 모듈을 실행한다.
 
 ---
 
-## 5. n8n 구현
+## 5. n8n 구현 과정 요약
 
-제출용으로 n8n에도 같은 목적의 단순 워크플로우를 생성하였다.
+n8n에는 실제 동작하는 제출용 워크플로우를 생성하였다.
 
 ### 5.1 n8n 워크플로우 정보
 
 | 항목 | 내용 |
 |---|---|
-| 워크플로우 이름 | `[과제] 프로젝트1 - Google Form 입력 → Google Sheets 저장 (단순형)` |
+| 워크플로우 이름 | `[과제] 프로젝트1 - Google Form 분기 저장 자동화 (n8n)` |
 | n8n 워크플로우 ID | `3aKejBkfh3mRP22S` |
 | 상태 | 활성화됨 |
 | Webhook Path | `project1-google-form-to-sheet-simple` |
 | Production Webhook URL | `https://n8n.chanuk.theworkpc.com/webhook/project1-google-form-to-sheet-simple` |
-| 저장 대상 | Google Sheets |
+| 워크플로우 JSON | `assets/project1/n8n-project1-simple-workflow.json` |
 
 ### 5.2 n8n 노드 구성
 
@@ -74,65 +96,120 @@ Google Form
 [P1] Google Form 제출 Webhook
 → [P1] 입력값 정리
 → [P1] Google Sheets에 행 추가
-→ [P1] 저장 완료 응답
+→ [P1] 카테고리 조건 분기
+  ├─ 긴급 → [P1] 긴급 결과 기록
+  └─ 일반 → [P1] 일반 결과 기록
+→ [P1] 저장 및 분기 완료 응답
 ```
 
-### 5.3 n8n 처리 내용
+### 5.3 n8n 구현 결과
 
-1. Webhook으로 폼 데이터를 받는다.
-2. 이름, 이메일, 카테고리, 문의내용 값을 정리한다.
-3. Google Sheets에 새 행을 추가한다.
-4. 저장 완료 JSON 응답을 반환한다.
+n8n 워크플로우는 실제 활성화되어 있으며 일반/긴급 분기 테스트를 각각 1회 실행하였다.
 
-### 5.4 n8n 워크플로우 JSON
+| 테스트 | 입력 카테고리 | 실행 분기 | 결과 |
+|---|---|---|---|
+| 일반 분기 테스트 | 일반 | 일반 결과 기록 | 성공 |
+| 긴급 분기 테스트 | 긴급 | 긴급 결과 기록 | 성공 |
 
-워크플로우 구조는 아래 파일에도 저장하였다.
-
-```text
-assets/project1/n8n-project1-simple-workflow.json
-```
-
----
-
-## 6. 테스트 예시
-
-아래와 같은 JSON이 들어오면 Google Sheets에 한 줄이 추가된다.
-
-```json
-{
-  "이름": "홍길동",
-  "이메일": "hong@example.com",
-  "카테고리": "일반",
-  "문의내용": "서비스 이용 방법을 알고 싶습니다."
-}
-```
-
-응답 예시는 다음과 같다.
+일반 분기 응답 예시:
 
 ```json
 {
   "success": true,
-  "message": "Google Sheets 저장 완료",
-  "receivedName": "홍길동",
-  "category": "일반"
+  "message": "Google Sheets 저장 및 카테고리 분기 완료",
+  "name": "테스트-일반",
+  "category": "일반",
+  "branch": "일반",
+  "result": "일반 문의로 분류되어 일반 처리 경로를 실행함"
+}
+```
+
+긴급 분기 응답 예시:
+
+```json
+{
+  "success": true,
+  "message": "Google Sheets 저장 및 카테고리 분기 완료",
+  "name": "테스트-긴급",
+  "category": "긴급",
+  "branch": "긴급",
+  "result": "긴급 문의로 분류되어 긴급 처리 경로를 실행함"
 }
 ```
 
 ---
 
-## 7. 구현 화면 캡처
+## 6. Make와 n8n 비교 분석
 
-| 구분 | 파일 |
-|---|---|
-| Google Form 구성 화면 | `assets/project1/google-form.png` |
-| Google Sheets 응답 저장 화면 | `assets/project1/google-sheets-result.png` |
-| n8n 워크플로우 구성 화면 | `assets/project1/n8n-workflow.png` |
-| n8n 실행 결과 화면 | `assets/project1/n8n-result.png` |
+| 비교 항목 | Make | n8n |
+|---|---|---|
+| UI/UX | 초보자도 쉽게 이해할 수 있는 시각적 Scenario UI | 노드 기반 UI이며 데이터 흐름을 세밀하게 확인 가능 |
+| 설정 난이도 | SaaS 로그인 후 바로 시작 가능해 낮음 | 셀프호스팅, Credential, Webhook 설정 이해가 필요함 |
+| 연동 서비스 범위 | 주요 SaaS 앱 연동이 매우 편리함 | HTTP Request, Code Node로 커스텀 API 연동에 강함 |
+| 무료 플랜/비용 | 무료 플랜 이후 작업량이 늘면 과금 부담 가능 | 직접 호스팅 시 사용량 과금 없이 운영 가능 |
+| 조건 분기 방식 | Router와 Filter를 UI에서 쉽게 추가 | Switch/IF 노드로 세밀한 조건 분기 가능 |
+| 실행 로그 확인 | 실행 History에서 모듈별 결과 확인 | Execution 로그에서 각 노드 입력/출력 데이터 확인 |
+| 유지보수성 | 단순 자동화는 관리가 쉬움 | 복잡한 자동화와 장기 운영에 유리함 |
+| 확장성 | 제공 모듈 중심으로 빠르게 확장 | Code Node, Webhook, MCP로 자유롭게 확장 가능 |
 
 ---
 
-## 8. 결론
+## 7. 각 도구의 장단점
 
-프로젝트 1은 복잡한 자동화보다 **입력받은 데이터를 정확하게 기록하는 기본 자동화**에 초점을 맞추었다.
+### 7.1 Make 장점
 
-Google Form과 Google Sheets만으로도 충분히 실용적인 자동화가 가능하며, n8n을 함께 사용하면 Webhook, 외부 API, 추가 알림 등으로 확장할 수 있다.
+- 가입 후 바로 사용할 수 있어 초기 진입 장벽이 낮다.
+- Google Sheets, Gmail, Slack 등 SaaS 앱 연결이 쉽다.
+- Router/Filter 설정이 직관적이다.
+- 간단한 업무 자동화를 빠르게 만들기 좋다.
+
+### 7.2 Make 단점
+
+- 사용량이 많아지면 비용이 늘어날 수 있다.
+- 복잡한 예외 처리나 커스텀 로직은 관리가 어려워질 수 있다.
+- 셀프호스팅이나 내부 서버 통제에는 적합하지 않다.
+
+### 7.3 n8n 장점
+
+- 직접 호스팅하면 사용량 기반 과금 부담이 적다.
+- Webhook, Code Node, HTTP Request를 활용해 커스텀 로직을 만들기 쉽다.
+- 실행 로그에서 각 노드의 입력/출력 데이터를 자세히 확인할 수 있다.
+- MCP 연동 시 AI가 워크플로우 노드를 직접 조회하고 수정할 수 있어 바이브코딩 방식에 적합하다.
+
+### 7.4 n8n 단점
+
+- 초기 서버, 도메인, Credential 설정이 Make보다 어렵다.
+- 노드별 데이터 구조를 이해해야 디버깅이 쉽다.
+- 셀프호스팅 시 백업, 보안, 업데이트를 직접 관리해야 한다.
+
+---
+
+## 8. 어떤 상황에서 적합한가
+
+| 상황 | 적합한 도구 | 이유 |
+|---|---|---|
+| 빠르게 자동화를 만들고 싶을 때 | Make | SaaS 기반이라 설정이 빠르고 UI가 쉽다. |
+| 비개발자가 간단한 업무를 자동화할 때 | Make | Router/Filter와 앱 연결이 직관적이다. |
+| 사용량이 많고 비용을 줄이고 싶을 때 | n8n | 셀프호스팅 시 사용량 과금 부담이 적다. |
+| 복잡한 API 연동이나 커스텀 로직이 필요할 때 | n8n | HTTP Request와 Code Node 사용이 자유롭다. |
+| AI가 워크플로우를 직접 수정하는 방식이 필요할 때 | n8n | MCP를 통해 노드 조회·수정이 가능하다. |
+
+---
+
+## 9. 구현 화면 및 실행 결과 캡처
+
+| 구분 | 파일 |
+|---|---|
+| Make 워크플로우 구성 화면 | `assets/project1/make-workflow.png` |
+| Make 실행 결과 화면 | `assets/project1/make-result.png` |
+| n8n 워크플로우 구성 화면 | `assets/project1/n8n-workflow.png` |
+| n8n 일반/긴급 분기 실행 결과 화면 | `assets/project1/n8n-result.png` |
+| Google Sheets 저장 결과 화면 | `assets/project1/google-sheets-result.png` |
+
+---
+
+## 10. 결론
+
+이번 프로젝트에서는 **Google Form 제출 → 입력값 정리 → Google Sheets 저장 → 카테고리 조건 분기 → 일반/긴급 결과 기록**이라는 동일한 구조를 Make와 n8n 관점에서 비교하였다.
+
+Make는 빠른 설정과 쉬운 UI가 장점이므로 간단한 SaaS 자동화에 적합하다. 반면 n8n은 초기 설정은 더 필요하지만 직접 호스팅, 세밀한 로그 확인, 커스텀 코드, MCP 기반 AI 수정이 가능하므로 장기적으로 확장 가능한 자동화에 더 적합하다.

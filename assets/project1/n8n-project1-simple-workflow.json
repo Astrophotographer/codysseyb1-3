@@ -1,6 +1,6 @@
 {
   "id": "3aKejBkfh3mRP22S",
-  "name": "[과제] 프로젝트1 - Google Form 입력 → Google Sheets 저장 (단순형)",
+  "name": "[과제] 프로젝트1 - Google Form 분기 저장 자동화 (n8n)",
   "active": true,
   "nodes": [
     {
@@ -17,7 +17,8 @@
         0
       ],
       "id": "aeb098f3-c9db-4814-bfb4-4f9bc8478b8a",
-      "name": "[P1] Google Form 제출 Webhook"
+      "name": "[P1] Google Form 제출 Webhook",
+      "webhookId": "1c25c9c0-81b8-46d2-b9b4-4d9553937319"
     },
     {
       "parameters": {
@@ -168,24 +169,157 @@
     },
     {
       "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('[P1] 입력값 정리').item.json[\"카테고리\"] }}",
+                    "rightValue": "긴급",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "긴급"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('[P1] 입력값 정리').item.json[\"카테고리\"] }}",
+                    "rightValue": "일반",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "일반"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        0
+      ],
+      "id": "2d1233d2-e982-484f-b0d0-61c3553aadde",
+      "name": "[P1] 카테고리 조건 분기"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1730c8d-0a98-4e8c-8576-857381e26089",
+              "name": "처리분기",
+              "value": "긴급",
+              "type": "string"
+            },
+            {
+              "id": "8d5324db-fc54-4ac5-9582-b2794df1c9ff",
+              "name": "결과기록",
+              "value": "긴급 문의로 분류되어 긴급 처리 경로를 실행함",
+              "type": "string"
+            },
+            {
+              "id": "b17da19f-82a2-4122-84f1-700c47795802",
+              "name": "실행확인",
+              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1080,
+        -120
+      ],
+      "id": "4083c6d4-5dc8-4246-983e-a0bd6c5385fd",
+      "name": "[P1] 긴급 결과 기록"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a92d5622-c401-4fc4-8cda-e52cd4b056e5",
+              "name": "처리분기",
+              "value": "일반",
+              "type": "string"
+            },
+            {
+              "id": "d6e5813e-700b-4cef-b8ba-0bbe81c6dc53",
+              "name": "결과기록",
+              "value": "일반 문의로 분류되어 일반 처리 경로를 실행함",
+              "type": "string"
+            },
+            {
+              "id": "f4d55980-8aa1-41cf-b912-5e9c360431aa",
+              "name": "실행확인",
+              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1080,
+        120
+      ],
+      "id": "625f4531-8625-4be5-8aab-99add71b65b2",
+      "name": "[P1] 일반 결과 기록"
+    },
+    {
+      "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, message: 'Google Sheets 저장 완료', receivedName: $('[P1] 입력값 정리').item.json['이름'], category: $('[P1] 입력값 정리').item.json['카테고리'] } }}",
+        "responseBody": "={{ { success: true, message: 'Google Sheets 저장 및 카테고리 분기 완료', name: $('[P1] 입력값 정리').item.json['이름'], category: $('[P1] 입력값 정리').item.json['카테고리'], branch: $json['처리분기'], result: $json['결과기록'] } }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        800,
+        1360,
         0
       ],
-      "id": "699b045e-9d8f-48db-86ce-ac1e62f00af3",
-      "name": "[P1] 저장 완료 응답"
+      "id": "2e3483eb-8be0-4242-ba5e-085fc93827a4",
+      "name": "[P1] 저장 및 분기 완료 응답"
     },
     {
       "parameters": {
-        "content": "## 프로젝트1 단순형\nGoogle Form/Apps Script 또는 테스트 POST → n8n Webhook → Google Sheets 행 추가\n\n입력 필드: 이름, 이메일, 카테고리, 문의내용 또는 내용\n\n복잡한 AI/분기 없이 '폼 입력값을 시트에 기록'하는 제출용 단순 워크플로우입니다.",
+        "content": "## 프로젝트1 제출용 n8n\nGoogle Form 제출 → 입력값 정리 → Google Sheets 저장 → 카테고리 조건 분기 → 일반/긴급 결과 기록\n\n분기 기준: 카테고리에 '긴급' 또는 '일반' 포함",
         "height": 260,
-        "width": 360
+        "width": 420
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -193,7 +327,7 @@
         0,
         -320
       ],
-      "id": "8dc5b285-b19a-4e1a-9fbb-ec5eaf1ef91c",
+      "id": "0f3906a8-e0e8-4265-8327-28065402177b",
       "name": "[P1] 설명"
     }
   ],
@@ -224,7 +358,47 @@
       "main": [
         [
           {
-            "node": "[P1] 저장 완료 응답",
+            "node": "[P1] 카테고리 조건 분기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[P1] 카테고리 조건 분기": {
+      "main": [
+        [
+          {
+            "node": "[P1] 긴급 결과 기록",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "[P1] 일반 결과 기록",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[P1] 긴급 결과 기록": {
+      "main": [
+        [
+          {
+            "node": "[P1] 저장 및 분기 완료 응답",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[P1] 일반 결과 기록": {
+      "main": [
+        [
+          {
+            "node": "[P1] 저장 및 분기 완료 응답",
             "type": "main",
             "index": 0
           }
@@ -238,5 +412,5 @@
     "availableInMCP": false
   },
   "createdAt": "2026-06-23T04:35:05.812Z",
-  "updatedAt": "2026-06-23T04:35:05.812Z"
+  "updatedAt": "2026-06-23T05:38:41.722Z"
 }

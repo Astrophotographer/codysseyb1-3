@@ -6,7 +6,7 @@
 
 | 구분 | 파일 | 내용 |
 |---|---|---|
-| 프로젝트 1 | [`docs/project1-automation-tool-comparison.md`](docs/project1-automation-tool-comparison.md) | Google Form 입력값을 Google Sheets에 저장하는 단순 자동화 구현 문서 |
+| 프로젝트 1 | [`docs/project1-automation-tool-comparison.md`](docs/project1-automation-tool-comparison.md) | Make와 n8n으로 동일한 Google Form → Google Sheets 저장 → 조건 분기 워크플로우를 구현한 비교 분석 보고서 |
 | 프로젝트 2 | [`docs/project2-cs-desk-automation.md`](docs/project2-cs-desk-automation.md) | CS Desk 자동화 설계 및 구현 문서 |
 | Discord 설정 | [`docs/discord-setup-guide.md`](docs/discord-setup-guide.md) | Discord 채널, Webhook, Bot, 권한 설정 상세 가이드 |
 | 스크린샷 안내 | [`assets/README.md`](assets/README.md) | 구현 화면/실행 결과 캡처 파일 배치 안내 |
@@ -15,10 +15,10 @@
 
 ### 프로젝트 1. 자동화 도구 비교 구현
 
-- 구현 도구: **Google Form**, **Google Sheets**, **n8n**
-- 동일 업무: 사용자가 폼에 입력한 이름, 이메일, 카테고리, 문의내용을 스프레드시트에 자동 저장
-- n8n 워크플로우: `[과제] 프로젝트1 - Google Form 입력 → Google Sheets 저장 (단순형)`
-- 핵심 포인트: 복잡한 AI/분기 없이 폼 입력값을 시트에 누적하는 기본 자동화
+- 비교 도구: **Make**, **n8n**
+- 동일 업무: Google Form 제출 데이터를 정리하여 Google Sheets에 저장하고 카테고리에 따라 일반/긴급 경로로 분기
+- n8n 워크플로우: `[과제] 프로젝트1 - Google Form 분기 저장 자동화 (n8n)`
+- 핵심 포인트: 단순한 폼 입력 자동화 흐름을 유지하면서 Trigger, Action 2개 이상, 조건 분기를 모두 포함
 
 ### 프로젝트 2. CS Desk 자동화
 
@@ -38,10 +38,11 @@
 스크린샷은 아래 경로에 넣으면 문서의 링크와 바로 연결됩니다.
 
 ```text
-assets/project1/google-form.png
-assets/project1/google-sheets-result.png
+assets/project1/make-workflow.png
+assets/project1/make-result.png
 assets/project1/n8n-workflow.png
 assets/project1/n8n-result.png
+assets/project1/google-sheets-result.png
 assets/project1/n8n-project1-simple-workflow.json
 assets/project2/cs-desk-form.png
 assets/project2/n8n-workflow.png
