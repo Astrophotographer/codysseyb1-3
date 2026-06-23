@@ -6,7 +6,7 @@
 
 | 구분 | 파일 | 내용 |
 |---|---|---|
-| 프로젝트 1 | [`docs/project1-automation-tool-comparison.md`](docs/project1-automation-tool-comparison.md) | Make와 n8n으로 동일 자동화 워크플로우를 구현한 비교 분석 보고서 |
+| 프로젝트 1 | [`docs/project1-automation-tool-comparison.md`](docs/project1-automation-tool-comparison.md) | Google Form 입력값을 Google Sheets에 저장하는 단순 자동화 구현 문서 |
 | 프로젝트 2 | [`docs/project2-cs-desk-automation.md`](docs/project2-cs-desk-automation.md) | CS Desk 자동화 설계 및 구현 문서 |
 | Discord 설정 | [`docs/discord-setup-guide.md`](docs/discord-setup-guide.md) | Discord 채널, Webhook, Bot, 권한 설정 상세 가이드 |
 | 스크린샷 안내 | [`assets/README.md`](assets/README.md) | 구현 화면/실행 결과 캡처 파일 배치 안내 |
@@ -15,11 +15,10 @@
 
 ### 프로젝트 1. 자동화 도구 비교 구현
 
-- 비교 도구: **Make**, **n8n**
-- 동일 업무: 문의/메일 수신 내용을 구조화하여 스프레드시트에 저장하고 팀 채널로 공유하는 자동화
-- 핵심 비교 포인트:
-  - Make: 시각적 구성과 빠른 SaaS 연동에 강점
-  - n8n: 직접 호스팅 시 무료로 운영 가능하며, MCP 연동을 통해 AI가 워크플로우 노드를 직접 수정하는 바이브코딩 방식에 유리
+- 구현 도구: **Google Form**, **Google Sheets**, **n8n**
+- 동일 업무: 사용자가 폼에 입력한 이름, 이메일, 카테고리, 문의내용을 스프레드시트에 자동 저장
+- n8n 워크플로우: `[과제] 프로젝트1 - Google Form 입력 → Google Sheets 저장 (단순형)`
+- 핵심 포인트: 복잡한 AI/분기 없이 폼 입력값을 시트에 누적하는 기본 자동화
 
 ### 프로젝트 2. CS Desk 자동화
 
@@ -39,10 +38,11 @@
 스크린샷은 아래 경로에 넣으면 문서의 링크와 바로 연결됩니다.
 
 ```text
-assets/project1/make-workflow.png
-assets/project1/make-result.png
+assets/project1/google-form.png
+assets/project1/google-sheets-result.png
 assets/project1/n8n-workflow.png
 assets/project1/n8n-result.png
+assets/project1/n8n-project1-simple-workflow.json
 assets/project2/cs-desk-form.png
 assets/project2/n8n-workflow.png
 assets/project2/discord-result.png

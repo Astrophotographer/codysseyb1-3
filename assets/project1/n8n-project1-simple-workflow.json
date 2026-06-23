@@ -1,0 +1,242 @@
+{
+  "id": "3aKejBkfh3mRP22S",
+  "name": "[과제] 프로젝트1 - Google Form 입력 → Google Sheets 저장 (단순형)",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "project1-google-form-to-sheet-simple",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "aeb098f3-c9db-4814-bfb4-4f9bc8478b8a",
+      "name": "[P1] Google Form 제출 Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da8ff457-a2ef-4fc5-bcf1-80891cb8d122",
+              "name": "제출시간",
+              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "type": "string"
+            },
+            {
+              "id": "0693524c-68c7-4ff9-bc6e-53486bc92237",
+              "name": "이름",
+              "value": "={{ $json.body[\"이름\"] || $json.body.name || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "d2e9dd96-88da-478c-80cd-51d6d947eab8",
+              "name": "이메일",
+              "value": "={{ $json.body[\"이메일\"] || $json.body.email || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "e5f21157-b4f6-4c40-b726-ce4223636c70",
+              "name": "카테고리",
+              "value": "={{ $json.body[\"카테고리\"] || $json.body.category || \"일반\" }}",
+              "type": "string"
+            },
+            {
+              "id": "5c499f3c-b96e-4392-9c98-9fc65a1f3741",
+              "name": "내용",
+              "value": "={{ $json.body[\"문의내용\"] || $json.body[\"내용\"] || $json.body.message || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "2dfc183e-6075-4a88-96c9-d8e8f575d2f0",
+              "name": "제목",
+              "value": "={{ \"[프로젝트1] \" + ($json.body[\"카테고리\"] || $json.body.category || \"일반\") + \" 문의\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        0
+      ],
+      "id": "d416400f-0551-4e87-b68c-34c7948cfb48",
+      "name": "[P1] 입력값 정리"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs",
+          "mode": "list",
+          "cachedResultName": "CS Desk",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "시트1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "이름": "={{ $json[\"이름\"] }}",
+            "이메일": "={{ $json[\"이메일\"] }}",
+            "내용": "={{ $json[\"내용\"] }}",
+            "카테고리": "={{ $json[\"카테고리\"] }}",
+            "제목": "={{ $json[\"제목\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "이름",
+              "displayName": "이름",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "이메일",
+              "displayName": "이메일",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "내용",
+              "displayName": "내용",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "카테고리",
+              "displayName": "카테고리",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "제목",
+              "displayName": "제목",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        540,
+        0
+      ],
+      "id": "18c04093-8c56-472d-b96a-95838b3339c1",
+      "name": "[P1] Google Sheets에 행 추가",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pW6CTqVeBi6zwwqL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: 'Google Sheets 저장 완료', receivedName: $('[P1] 입력값 정리').item.json['이름'], category: $('[P1] 입력값 정리').item.json['카테고리'] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        800,
+        0
+      ],
+      "id": "699b045e-9d8f-48db-86ce-ac1e62f00af3",
+      "name": "[P1] 저장 완료 응답"
+    },
+    {
+      "parameters": {
+        "content": "## 프로젝트1 단순형\nGoogle Form/Apps Script 또는 테스트 POST → n8n Webhook → Google Sheets 행 추가\n\n입력 필드: 이름, 이메일, 카테고리, 문의내용 또는 내용\n\n복잡한 AI/분기 없이 '폼 입력값을 시트에 기록'하는 제출용 단순 워크플로우입니다.",
+        "height": 260,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -320
+      ],
+      "id": "8dc5b285-b19a-4e1a-9fbb-ec5eaf1ef91c",
+      "name": "[P1] 설명"
+    }
+  ],
+  "connections": {
+    "[P1] Google Form 제출 Webhook": {
+      "main": [
+        [
+          {
+            "node": "[P1] 입력값 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[P1] 입력값 정리": {
+      "main": [
+        [
+          {
+            "node": "[P1] Google Sheets에 행 추가",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[P1] Google Sheets에 행 추가": {
+      "main": [
+        [
+          {
+            "node": "[P1] 저장 완료 응답",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "createdAt": "2026-06-23T04:35:05.812Z",
+  "updatedAt": "2026-06-23T04:35:05.812Z"
+}

@@ -6,10 +6,11 @@
 
 | 파일명 | 내용 |
 |---|---|
-| `project1/make-workflow.png` | Make 워크플로우 구성 화면 |
-| `project1/make-result.png` | Make 실행 결과 화면 |
-| `project1/n8n-workflow.png` | n8n 워크플로우 구성 화면 |
+| `project1/google-form.png` | Google Form 입력 화면 |
+| `project1/google-sheets-result.png` | Google Sheets 응답 저장 결과 화면 |
+| `project1/n8n-workflow.png` | n8n 단순형 워크플로우 구성 화면 |
 | `project1/n8n-result.png` | n8n 실행 결과 화면 |
+| `project1/n8n-project1-simple-workflow.json` | n8n 워크플로우 JSON 내보내기 |
 
 ## 프로젝트 2
 
