@@ -220,7 +220,46 @@ sequenceDiagram
 
 ---
 
-## 8. 에러 처리 및 재실행 설계
+## 8. Discord 설정 과정
+
+CS Desk 자동화는 Discord를 다음 두 가지 방식으로 사용한다.
+
+1. Webhook으로 일반/긴급 CS 알림을 채널에 전송한다.
+2. Discord Bot API로 쓰레드의 `메일발송:` 댓글을 읽고, 메일 발송 완료 메시지를 다시 쓰레드에 작성한다.
+
+따라서 Discord 설정에는 다음 작업이 필요하다.
+
+```text
+Discord 서버/채널 생성
+→ 개발자 모드 ON
+→ 일반/긴급 채널 ID 복사
+→ 각 채널 Webhook 생성
+→ Discord Developer Portal에서 Bot 생성
+→ Message Content Intent ON
+→ Bot을 서버에 초대
+→ 카테고리/채널 권한 부여
+→ n8n에 Webhook URL, Bot Token, 채널 ID 입력
+```
+
+자세한 단계별 설정 방법은 별도 문서에 누구나 따라 할 수 있도록 정리하였다.
+
+- [Discord 설정 과정 상세 가이드](./discord-setup-guide.md)
+
+핵심 권한은 다음과 같다.
+
+| 권한 | 필요한 이유 |
+|---|---|
+| View Channel | Bot이 일반/긴급 채널을 볼 수 있어야 함 |
+| Read Message History | 기존 CS 알림과 쓰레드 댓글을 읽어야 함 |
+| Send Messages | 완료 메시지를 쓸 수 있어야 함 |
+| Create Public Threads | 필요 시 공개 쓰레드를 만들 수 있어야 함 |
+| Use Public Threads | 공개 쓰레드 접근이 필요함 |
+| Send Messages in Threads | 쓰레드 안에 발송 완료 메시지를 써야 함 |
+| Message Content Intent | `메일발송:` 댓글 내용을 읽기 위해 필요함 |
+
+---
+
+## 9. 에러 처리 및 재실행 설계
 
 워크플로우 실패 시 별도 Error Handler 워크플로우가 작동한다.
 
@@ -235,27 +274,27 @@ sequenceDiagram
 
 ---
 
-## 9. 구현 화면 캡처
+## 10. 구현 화면 캡처
 
-### 9.1 CS Desk 입력 화면
+### 10.1 CS Desk 입력 화면
 
 ![CS Desk Form](../assets/project2/cs-desk-form.png)
 
-### 9.2 n8n 워크플로우 구현 화면
+### 10.2 n8n 워크플로우 구현 화면
 
 ![n8n Workflow](../assets/project2/n8n-workflow.png)
 
-### 9.3 Discord 실행 결과 화면
+### 10.3 Discord 실행 결과 화면
 
 ![Discord Result](../assets/project2/discord-result.png)
 
-### 9.4 이메일 실행 결과 화면
+### 10.4 이메일 실행 결과 화면
 
 ![Email Result](../assets/project2/email-result.png)
 
 ---
 
-## 10. 실행 결과 요약
+## 11. 실행 결과 요약
 
 | 테스트 | 입력 | 기대 결과 | 결과 |
 |---|---|---|---|
@@ -268,7 +307,7 @@ sequenceDiagram
 
 ---
 
-## 11. 기대 효과
+## 12. 기대 효과
 
 - CS 담당자의 반복 입력 업무 감소
 - 문의 누락 가능성 감소
@@ -279,7 +318,7 @@ sequenceDiagram
 
 ---
 
-## 12. 제출 체크리스트
+## 13. 제출 체크리스트
 
 | 요구사항 | 충족 여부 | 비고 |
 |---|---:|---|

@@ -19,6 +19,7 @@
 - [x] Mermaid 다이어그램 포함
 - [x] 구현 화면 캡처 위치 명시
 - [x] 실행 결과 화면 캡처 위치 명시
+- [x] Discord 채널, Webhook, Bot, 권한, Message Content Intent 설정 과정 상세 작성
 
 ## 제출 전 추가 작업
 

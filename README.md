@@ -8,6 +8,7 @@
 |---|---|---|
 | 프로젝트 1 | [`docs/project1-automation-tool-comparison.md`](docs/project1-automation-tool-comparison.md) | Make와 n8n으로 동일 자동화 워크플로우를 구현한 비교 분석 보고서 |
 | 프로젝트 2 | [`docs/project2-cs-desk-automation.md`](docs/project2-cs-desk-automation.md) | CS Desk 자동화 설계 및 구현 문서 |
+| Discord 설정 | [`docs/discord-setup-guide.md`](docs/discord-setup-guide.md) | Discord 채널, Webhook, Bot, 권한 설정 상세 가이드 |
 | 스크린샷 안내 | [`assets/README.md`](assets/README.md) | 구현 화면/실행 결과 캡처 파일 배치 안내 |
 
 ## 프로젝트 요약
