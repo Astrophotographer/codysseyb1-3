@@ -1,64 +1,114 @@
 {
-  "id": "3aKejBkfh3mRP22S",
-  "name": "[과제] 프로젝트1 - Google Form 분기 저장 자동화 (n8n)",
-  "active": true,
+  "name": "[과제] 프로젝트1 - Google Form 응답 카테고리별 시트 분류 (n8n)",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "project1-google-form-to-sheet-simple",
-        "responseMode": "responseNode",
-        "options": {}
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
       },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
       "position": [
         0,
         0
       ],
-      "id": "aeb098f3-c9db-4814-bfb4-4f9bc8478b8a",
-      "name": "[P1] Google Form 제출 Webhook",
-      "webhookId": "1c25c9c0-81b8-46d2-b9b4-4d9553937319"
+      "id": "45b967cc-da14-428f-8865-02d7e67f87e2",
+      "name": "[P1] 1분마다 구글폼 응답 확인"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs",
+          "mode": "list",
+          "cachedResultName": "프로젝트1 문의 응답",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit?resourcekey=&gid=351521906#gid=351521906"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "351521906",
+          "mode": "id",
+          "cachedResultName": "구글폼 응답",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit?resourcekey=&gid=351521906#gid=351521906"
+        },
+        "filtersUI": {},
+        "combineFilters": "AND",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "id": "38b33e09-acc0-4e31-a39b-8d0d52714721",
+      "name": "[P1] 구글폼 응답 시트 읽기",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pW6CTqVeBi6zwwqL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst items = $input.all();\n\nfunction rowNumber(item, index) {\n  const j = item.json || {};\n  const candidates = [j.row_number, j.rowNumber, j.__rowNumber, j['row_number'], j['Row Number']];\n  for (const value of candidates) {\n    const n = Number(value);\n    if (Number.isFinite(n) && n > 0) return n;\n  }\n  // Google Sheets header row is row 1, so first data row is usually row 2\n  return index + 2;\n}\n\nconst rows = items.map((item, index) => ({ item, row: rowNumber(item, index) }));\nconst maxRow = rows.reduce((max, r) => Math.max(max, r.row), 0);\n\n// First scheduled run: remember the current end of the response sheet so old rows are not duplicated.\nif (staticData.project1LastProcessedRow === undefined) {\n  staticData.project1LastProcessedRow = maxRow;\n  return [];\n}\n\nconst lastProcessed = Number(staticData.project1LastProcessedRow || 0);\nconst freshRows = rows\n  .filter(r => r.row > lastProcessed)\n  .sort((a, b) => a.row - b.row);\n\nif (freshRows.length === 0) {\n  return [];\n}\n\nstaticData.project1LastProcessedRow = freshRows[freshRows.length - 1].row;\nreturn freshRows.map(r => ({\n  json: {\n    ...r.item.json,\n    원본행번호: r.row,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "33e940e8-49b9-4d0f-be27-905e656b0cb3",
+      "name": "[P1] 새 응답만 통과"
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
             {
-              "id": "da8ff457-a2ef-4fc5-bcf1-80891cb8d122",
+              "id": "a6ac4542-d56e-43ff-a614-20fcc0051c13",
               "name": "제출시간",
-              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "value": "={{ $json[\"타임스탬프\"] || $json[\"Timestamp\"] || $json[\"제출시간\"] || $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
               "type": "string"
             },
             {
-              "id": "0693524c-68c7-4ff9-bc6e-53486bc92237",
+              "id": "99d2601c-beb0-4eee-a86b-10abf09e9051",
               "name": "이름",
-              "value": "={{ $json.body[\"이름\"] || $json.body.name || \"\" }}",
+              "value": "={{ $json[\"이름\"] || $json.name || \"\" }}",
               "type": "string"
             },
             {
-              "id": "d2e9dd96-88da-478c-80cd-51d6d947eab8",
+              "id": "7b0762dc-6036-48e5-be79-5a150c56105e",
               "name": "이메일",
-              "value": "={{ $json.body[\"이메일\"] || $json.body.email || \"\" }}",
+              "value": "={{ $json[\"이메일\"] || $json.email || \"\" }}",
               "type": "string"
             },
             {
-              "id": "e5f21157-b4f6-4c40-b726-ce4223636c70",
+              "id": "c7c1bfa7-ec4a-47a2-a91f-c3a803d7b2a1",
               "name": "카테고리",
-              "value": "={{ $json.body[\"카테고리\"] || $json.body.category || \"일반\" }}",
+              "value": "={{ $json[\"카테고리\"] || $json[\"문의유형\"] || $json[\"문의 유형\"] || \"\" }}",
               "type": "string"
             },
             {
-              "id": "5c499f3c-b96e-4392-9c98-9fc65a1f3741",
-              "name": "내용",
-              "value": "={{ $json.body[\"문의내용\"] || $json.body[\"내용\"] || $json.body.message || \"\" }}",
+              "id": "f5fd4171-8a5d-4a56-8a96-1cefa9e97fc3",
+              "name": "문의내용",
+              "value": "={{ $json[\"문의내용\"] || $json[\"문의 내용\"] || $json[\"내용\"] || \"\" }}",
               "type": "string"
             },
             {
-              "id": "2dfc183e-6075-4a88-96c9-d8e8f575d2f0",
-              "name": "제목",
-              "value": "={{ \"[프로젝트1] \" + ($json.body[\"카테고리\"] || $json.body.category || \"일반\") + \" 문의\" }}",
-              "type": "string"
+              "id": "72852986-703e-478d-920f-1f18b998bb86",
+              "name": "원본행번호",
+              "value": "={{ $json[\"원본행번호\"] }}",
+              "type": "number"
             }
           ]
         },
@@ -67,11 +117,78 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        260,
+        720,
         0
       ],
-      "id": "d416400f-0551-4e87-b68c-34c7948cfb48",
+      "id": "a05f575f-fdbc-4d33-b752-726f67634b05",
       "name": "[P1] 입력값 정리"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1afb2c22-cf80-46fd-8644-a9db2cfa3e8b",
+                    "leftValue": "={{ $json[\"카테고리\"] }}",
+                    "rightValue": "이용",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "이용문의"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "540b442a-c88c-4e9b-9222-d8cdf1d9b8c5",
+                    "leftValue": "={{ $json[\"카테고리\"] }}",
+                    "rightValue": "일반",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "일반문의"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        960,
+        0
+      ],
+      "id": "ab13b787-8a1b-4cd8-851a-667655b2808d",
+      "name": "[P1] 카테고리별 분기"
     },
     {
       "parameters": {
@@ -80,27 +197,37 @@
           "__rl": true,
           "value": "19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs",
           "mode": "list",
-          "cachedResultName": "CS Desk",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit?usp=drivesdk"
+          "cachedResultName": "프로젝트1 문의 응답",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit?resourcekey=&gid=351521906#gid=351521906"
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "시트1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit#gid=0"
+          "value": "이용문의",
+          "mode": "name",
+          "cachedResultName": "이용문의",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit"
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
+            "제출시간": "={{ $json[\"제출시간\"] }}",
             "이름": "={{ $json[\"이름\"] }}",
             "이메일": "={{ $json[\"이메일\"] }}",
-            "내용": "={{ $json[\"내용\"] }}",
             "카테고리": "={{ $json[\"카테고리\"] }}",
-            "제목": "={{ $json[\"제목\"] }}"
+            "문의내용": "={{ $json[\"문의내용\"] }}",
+            "원본행번호": "={{ $json[\"원본행번호\"] }}"
           },
           "matchingColumns": [],
           "schema": [
+            {
+              "id": "제출시간",
+              "displayName": "제출시간",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
             {
               "id": "이름",
               "displayName": "이름",
@@ -120,8 +247,103 @@
               "canBeUsedToMatch": true
             },
             {
-              "id": "내용",
-              "displayName": "내용",
+              "id": "카테고리",
+              "displayName": "카테고리",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "문의내용",
+              "displayName": "문의내용",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "원본행번호",
+              "displayName": "원본행번호",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        -120
+      ],
+      "id": "9b786828-78af-461d-b7de-cc94f12d1083",
+      "name": "[P1] 이용문의 시트에 저장",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pW6CTqVeBi6zwwqL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs",
+          "mode": "list",
+          "cachedResultName": "프로젝트1 문의 응답",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit?resourcekey=&gid=351521906#gid=351521906"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "일반문의",
+          "mode": "name",
+          "cachedResultName": "일반문의",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "제출시간": "={{ $json[\"제출시간\"] }}",
+            "이름": "={{ $json[\"이름\"] }}",
+            "이메일": "={{ $json[\"이메일\"] }}",
+            "카테고리": "={{ $json[\"카테고리\"] }}",
+            "문의내용": "={{ $json[\"문의내용\"] }}",
+            "원본행번호": "={{ $json[\"원본행번호\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "제출시간",
+              "displayName": "제출시간",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "이름",
+              "displayName": "이름",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "이메일",
+              "displayName": "이메일",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -138,8 +360,17 @@
               "canBeUsedToMatch": true
             },
             {
-              "id": "제목",
-              "displayName": "제목",
+              "id": "문의내용",
+              "displayName": "문의내용",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "원본행번호",
+              "displayName": "원본행번호",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -155,11 +386,11 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        540,
-        0
+        1200,
+        120
       ],
-      "id": "18c04093-8c56-472d-b96a-95838b3339c1",
-      "name": "[P1] Google Sheets에 행 추가",
+      "id": "6548e2e6-b8b4-4174-8f58-9475462ae48a",
+      "name": "[P1] 일반문의 시트에 저장",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "pW6CTqVeBi6zwwqL",
@@ -169,170 +400,44 @@
     },
     {
       "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": false,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $('[P1] 입력값 정리').item.json[\"카테고리\"] }}",
-                    "rightValue": "긴급",
-                    "operator": {
-                      "type": "string",
-                      "operation": "contains"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "긴급"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": false,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $('[P1] 입력값 정리').item.json[\"카테고리\"] }}",
-                    "rightValue": "일반",
-                    "operator": {
-                      "type": "string",
-                      "operation": "contains"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "일반"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.4,
-      "position": [
-        800,
-        0
-      ],
-      "id": "2d1233d2-e982-484f-b0d0-61c3553aadde",
-      "name": "[P1] 카테고리 조건 분기"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "b1730c8d-0a98-4e8c-8576-857381e26089",
-              "name": "처리분기",
-              "value": "긴급",
-              "type": "string"
-            },
-            {
-              "id": "8d5324db-fc54-4ac5-9582-b2794df1c9ff",
-              "name": "결과기록",
-              "value": "긴급 문의로 분류되어 긴급 처리 경로를 실행함",
-              "type": "string"
-            },
-            {
-              "id": "b17da19f-82a2-4122-84f1-700c47795802",
-              "name": "실행확인",
-              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1080,
-        -120
-      ],
-      "id": "4083c6d4-5dc8-4246-983e-a0bd6c5385fd",
-      "name": "[P1] 긴급 결과 기록"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "a92d5622-c401-4fc4-8cda-e52cd4b056e5",
-              "name": "처리분기",
-              "value": "일반",
-              "type": "string"
-            },
-            {
-              "id": "d6e5813e-700b-4cef-b8ba-0bbe81c6dc53",
-              "name": "결과기록",
-              "value": "일반 문의로 분류되어 일반 처리 경로를 실행함",
-              "type": "string"
-            },
-            {
-              "id": "f4d55980-8aa1-41cf-b912-5e9c360431aa",
-              "name": "실행확인",
-              "value": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1080,
-        120
-      ],
-      "id": "625f4531-8625-4be5-8aab-99add71b65b2",
-      "name": "[P1] 일반 결과 기록"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { success: true, message: 'Google Sheets 저장 및 카테고리 분기 완료', name: $('[P1] 입력값 정리').item.json['이름'], category: $('[P1] 입력값 정리').item.json['카테고리'], branch: $json['처리분기'], result: $json['결과기록'] } }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.4,
-      "position": [
-        1360,
-        0
-      ],
-      "id": "2e3483eb-8be0-4242-ba5e-085fc93827a4",
-      "name": "[P1] 저장 및 분기 완료 응답"
-    },
-    {
-      "parameters": {
-        "content": "## 프로젝트1 제출용 n8n\nGoogle Form 제출 → 입력값 정리 → Google Sheets 저장 → 카테고리 조건 분기 → 일반/긴급 결과 기록\n\n분기 기준: 카테고리에 '긴급' 또는 '일반' 포함",
-        "height": 260,
-        "width": 420
+        "content": "## 프로젝트1 n8n: Google Form 응답 자동 분류\nGoogle Form 응답이 연결된 Google Sheet(gid=351521906)를 1분마다 확인합니다.\n\n분기 기준:\n- 카테고리에 `이용` 포함 → `이용문의` 시트에 저장\n- 카테고리에 `일반` 포함 → `일반문의` 시트에 저장\n\n대상 스프레드시트: 19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs\n필요 시 `이용문의`, `일반문의` 탭의 헤더를 `제출시간, 이름, 이메일, 카테고리, 문의내용, 원본행번호`로 맞추세요.",
+        "height": 320,
+        "width": 520
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         0,
-        -320
+        -380
       ],
-      "id": "0f3906a8-e0e8-4265-8327-28065402177b",
+      "id": "ddc7b239-6198-4415-8714-f2328c63c1c1",
       "name": "[P1] 설명"
     }
   ],
   "connections": {
-    "[P1] Google Form 제출 Webhook": {
+    "[P1] 1분마다 구글폼 응답 확인": {
+      "main": [
+        [
+          {
+            "node": "[P1] 구글폼 응답 시트 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[P1] 구글폼 응답 시트 읽기": {
+      "main": [
+        [
+          {
+            "node": "[P1] 새 응답만 통과",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[P1] 새 응답만 통과": {
       "main": [
         [
           {
@@ -347,58 +452,25 @@
       "main": [
         [
           {
-            "node": "[P1] Google Sheets에 행 추가",
+            "node": "[P1] 카테고리별 분기",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "[P1] Google Sheets에 행 추가": {
+    "[P1] 카테고리별 분기": {
       "main": [
         [
           {
-            "node": "[P1] 카테고리 조건 분기",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "[P1] 카테고리 조건 분기": {
-      "main": [
-        [
-          {
-            "node": "[P1] 긴급 결과 기록",
+            "node": "[P1] 이용문의 시트에 저장",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "[P1] 일반 결과 기록",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "[P1] 긴급 결과 기록": {
-      "main": [
-        [
-          {
-            "node": "[P1] 저장 및 분기 완료 응답",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "[P1] 일반 결과 기록": {
-      "main": [
-        [
-          {
-            "node": "[P1] 저장 및 분기 완료 응답",
+            "node": "[P1] 일반문의 시트에 저장",
             "type": "main",
             "index": 0
           }
@@ -410,7 +482,5 @@
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
-  },
-  "createdAt": "2026-06-23T04:35:05.812Z",
-  "updatedAt": "2026-06-23T05:38:41.722Z"
+  }
 }

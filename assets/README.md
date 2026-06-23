@@ -9,7 +9,7 @@
 | `project1/make-workflow.png` | Make 워크플로우 구성 화면 |
 | `project1/make-result.png` | Make 실행 결과 화면 |
 | `project1/n8n-workflow.png` | n8n 조건 분기 워크플로우 구성 화면 |
-| `project1/n8n-result.png` | n8n 일반/긴급 분기 실행 결과 화면 |
+| `project1/n8n-result.png` | n8n 일반문의/이용문의 분기 저장 결과 화면 |
 | `project1/google-sheets-result.png` | Google Sheets 저장 결과 화면 |
 | `project1/n8n-project1-simple-workflow.json` | n8n 워크플로우 JSON 내보내기 |
 

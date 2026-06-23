@@ -4,7 +4,7 @@
 
 본 프로젝트는 동일한 단순 업무 자동화 시나리오를 **Make**와 **n8n** 두 가지 자동화 도구로 구현하고 비교 분석한 보고서이다.
 
-사용자가 **Google Form**에 문의를 제출하면 입력값을 정리하고 **Google Sheets**에 저장한 뒤, 카테고리에 따라 **일반/긴급 처리 경로**로 분기하는 구조를 동일하게 설계하였다.
+사용자가 **Google Form**에 문의를 제출하면 응답이 연결된 **Google Sheets**에 저장되고, 자동화 도구가 카테고리를 확인하여 **일반문의**와 **이용문의**를 서로 다른 시트 탭에 분류 저장하는 구조로 설계하였다.
 
 ---
 
@@ -17,8 +17,8 @@ flowchart TD
     A[Google Form 제출] --> B[입력값 정리]
     B --> C[Google Sheets 저장]
     C --> D{카테고리 조건 분기}
-    D -->|일반| E[일반 알림 또는 일반 결과 기록]
-    D -->|긴급| F[긴급 알림 또는 긴급 결과 기록]
+    D -->|일반문의| E[일반문의 시트에 저장]
+    D -->|이용문의| F[이용문의 시트에 저장]
 ```
 
 ### 2.1 입력 항목
@@ -27,7 +27,7 @@ flowchart TD
 |---|---|
 | 이름 | 문의자 이름 |
 | 이메일 | 문의자 이메일 주소 |
-| 카테고리 | 일반 또는 긴급 |
+| 카테고리 | 일반문의 또는 이용문의 |
 | 문의내용 | 사용자가 입력한 상세 문의 내용 |
 | 제출시간 | Google Form 또는 자동화 도구에서 기록되는 시간 |
 
@@ -35,10 +35,10 @@ flowchart TD
 
 | 요구사항 | 구현 내용 |
 |---|---|
-| Trigger 1개 이상 | Google Form 제출 또는 Webhook Trigger |
-| Action 2개 이상 | 입력값 정리, Google Sheets 저장, 일반/긴급 결과 기록 |
-| 조건 분기 1개 이상 | 카테고리 기준 일반/긴급 분기 |
-| 각 분기 실행 확인 | 일반/긴급 테스트 요청을 각각 1회 실행하여 응답 결과 확인 |
+| Trigger 1개 이상 | Google Form 응답이 연결된 Google Sheets 새 행 확인 |
+| Action 2개 이상 | 응답 시트 읽기, 입력값 정리, 카테고리별 Google Sheets 저장 |
+| 조건 분기 1개 이상 | 카테고리 기준 일반문의/이용문의 분기 |
+| 각 분기 실행 확인 | 일반문의/이용문의 테스트 요청을 각각 1회 실행하여 시트 저장 결과 확인 |
 
 ---
 
@@ -62,7 +62,7 @@ Google Form 제출 또는 Google Sheets 새 행 감지
 → 입력값 매핑
 → Google Sheets 행 추가/정리
 → Router로 카테고리 조건 분기
-→ 일반/긴급 경로별 알림 또는 결과 기록
+→ 일반문의/이용문의 시트별 저장
 ```
 
 ### 4.1 Make 구성 포인트
@@ -70,8 +70,8 @@ Google Form 제출 또는 Google Sheets 새 행 감지
 1. Google Form 응답을 Google Sheets에 연결한다.
 2. Make에서 Google Sheets의 새 행을 Trigger로 감지한다.
 3. 이름, 이메일, 카테고리, 문의내용 필드를 매핑한다.
-4. Router를 추가하여 카테고리가 `긴급`인지 `일반`인지 분기한다.
-5. 각 분기에서 알림 발송 또는 결과 기록 모듈을 실행한다.
+4. Router를 추가하여 카테고리가 `일반문의`인지 `이용문의`인지 분기한다.
+5. 각 분기에서 `일반문의` 시트 또는 `이용문의` 시트에 행을 추가한다.
 
 ---
 
@@ -83,58 +83,49 @@ n8n에는 실제 동작하는 제출용 워크플로우를 생성하였다.
 
 | 항목 | 내용 |
 |---|---|
-| 워크플로우 이름 | `[과제] 프로젝트1 - Google Form 분기 저장 자동화 (n8n)` |
+| 워크플로우 이름 | `[과제] 프로젝트1 - Google Form 응답 카테고리별 시트 분류 (n8n)` |
 | n8n 워크플로우 ID | `3aKejBkfh3mRP22S` |
 | 상태 | 활성화됨 |
-| Webhook Path | `project1-google-form-to-sheet-simple` |
-| Production Webhook URL | `https://n8n.chanuk.theworkpc.com/webhook/project1-google-form-to-sheet-simple` |
+| Google Form 편집 링크 | `https://docs.google.com/forms/d/1xaqrC_Ros0tHQEZmKyvGoJsYjgxetSYoezq7sT4UL8c/edit` |
+| Google Sheets 링크 | `https://docs.google.com/spreadsheets/d/19XxGARcj6roOINm1FCvJIDPWOTmtB0YaQXfm_N7AkHs/edit?resourcekey=&gid=351521906#gid=351521906` |
+| 감시 방식 | 1분마다 Google Form 응답 시트의 새 행 확인 |
 | 워크플로우 JSON | `assets/project1/n8n-project1-simple-workflow.json` |
 
 ### 5.2 n8n 노드 구성
 
 ```text
-[P1] Google Form 제출 Webhook
+[P1] 1분마다 구글폼 응답 확인
+→ [P1] 구글폼 응답 시트 읽기
+→ [P1] 새 응답만 통과
 → [P1] 입력값 정리
-→ [P1] Google Sheets에 행 추가
-→ [P1] 카테고리 조건 분기
-  ├─ 긴급 → [P1] 긴급 결과 기록
-  └─ 일반 → [P1] 일반 결과 기록
-→ [P1] 저장 및 분기 완료 응답
+→ [P1] 카테고리별 분기
+  ├─ 이용문의 → [P1] 이용문의 시트에 저장
+  └─ 일반문의 → [P1] 일반문의 시트에 저장
 ```
 
 ### 5.3 n8n 구현 결과
 
-n8n 워크플로우는 실제 활성화되어 있으며 일반/긴급 분기 테스트를 각각 1회 실행하였다.
+n8n 워크플로우는 실제 활성화되어 있으며 Google Form 응답이 추가되면 1분 단위로 새 행만 확인하여 일반문의/이용문의 시트로 분류 저장하도록 구성하였다.
 
 | 테스트 | 입력 카테고리 | 실행 분기 | 결과 |
 |---|---|---|---|
-| 일반 분기 테스트 | 일반 | 일반 결과 기록 | 성공 |
-| 긴급 분기 테스트 | 긴급 | 긴급 결과 기록 | 성공 |
+| 일반문의 분기 테스트 | 일반문의 | 일반문의 시트 저장 | 새 응답 입력 시 저장 |
+| 이용문의 분기 테스트 | 이용문의 | 이용문의 시트 저장 | 새 응답 입력 시 저장 |
 
-일반 분기 응답 예시:
+분류 저장 예시:
 
-```json
-{
-  "success": true,
-  "message": "Google Sheets 저장 및 카테고리 분기 완료",
-  "name": "테스트-일반",
-  "category": "일반",
-  "branch": "일반",
-  "result": "일반 문의로 분류되어 일반 처리 경로를 실행함"
-}
+```text
+카테고리 = 일반문의
+→ [P1] 일반문의 시트에 저장
+
+카테고리 = 이용문의
+→ [P1] 이용문의 시트에 저장
 ```
 
-긴급 분기 응답 예시:
+저장 컬럼은 다음과 같이 통일하였다.
 
-```json
-{
-  "success": true,
-  "message": "Google Sheets 저장 및 카테고리 분기 완료",
-  "name": "테스트-긴급",
-  "category": "긴급",
-  "branch": "긴급",
-  "result": "긴급 문의로 분류되어 긴급 처리 경로를 실행함"
-}
+```text
+제출시간 | 이름 | 이메일 | 카테고리 | 문의내용 | 원본행번호
 ```
 
 ---
@@ -148,7 +139,7 @@ Make와 n8n은 모두 MCP 또는 API 기반으로 AI 도구와 연결할 수 있
 | MCP 지원 | Make MCP Server 제공 | n8n MCP/API 연동 가능 |
 | AI 도구 활용 | MCP 서버에 노출된 시나리오/도구를 실행하거나 권한 범위 내에서 관리 가능 | 워크플로우 조회, 수정, 실행, 로그 확인을 API/MCP로 비교적 직접 처리 가능 |
 | 제약 | MCP 토큰 권한, Make 플랜, 노출된 도구 수에 따라 가능 작업이 달라짐 | 셀프호스팅 설정, API Key, Credential 관리가 필요함 |
-| 과제 적용 | Make 시나리오를 만들고 Router/Filter 실행 결과를 캡처하여 비교 | 실제 n8n 워크플로우를 생성·수정하고 일반/긴급 분기 테스트까지 실행 |
+| 과제 적용 | Make 시나리오를 만들고 Router/Filter 실행 결과를 캡처하여 비교 | 실제 n8n 워크플로우를 생성·수정하고 일반문의/이용문의 시트 분류 구조를 구현 |
 
 ---
 
@@ -224,13 +215,13 @@ Make와 n8n은 모두 MCP 또는 API 기반으로 AI 도구와 연결할 수 있
 | Make 워크플로우 구성 화면 | `assets/project1/make-workflow.png` |
 | Make 실행 결과 화면 | `assets/project1/make-result.png` |
 | n8n 워크플로우 구성 화면 | `assets/project1/n8n-workflow.png` |
-| n8n 일반/긴급 분기 실행 결과 화면 | `assets/project1/n8n-result.png` |
+| n8n 일반문의/이용문의 분기 실행 결과 화면 | `assets/project1/n8n-result.png` |
 | Google Sheets 저장 결과 화면 | `assets/project1/google-sheets-result.png` |
 
 ---
 
 ## 11. 결론
 
-이번 프로젝트에서는 **Google Form 제출 → 입력값 정리 → Google Sheets 저장 → 카테고리 조건 분기 → 일반/긴급 결과 기록**이라는 동일한 구조를 Make와 n8n 관점에서 비교하였다.
+이번 프로젝트에서는 **Google Form 제출 → Google Sheets 응답 저장 → 카테고리 조건 분기 → 일반문의/이용문의 시트별 저장**이라는 동일한 구조를 Make와 n8n 관점에서 비교하였다.
 
 Make는 빠른 설정과 쉬운 UI, 많은 SaaS 앱 커넥터, 템플릿 기반 시작 속도가 장점이므로 간단한 업무 자동화에 적합하다. 특히 Google Form/Sheets처럼 이미 준비된 앱을 연결하는 경우 제작 속도가 빠르고 비개발자도 이해하기 쉽다. 또한 Make도 MCP Server를 통해 AI 도구와 연결할 수 있으므로, MCP 연동 자체는 n8n만의 기능이 아니다. 다만 Make는 MCP 토큰 권한과 노출된 도구 범위에 따라 가능한 작업이 달라진다. n8n은 초기 설정은 더 필요하지만 직접 호스팅, 세밀한 로그 확인, 커스텀 코드, API/MCP 기반 워크플로우 편집이 쉬워 장기적으로 확장 가능한 자동화에 더 적합하다. 따라서 단순하고 빠른 SaaS 연동은 Make, 복잡한 조건 처리와 장기 운영·확장은 n8n이 더 적합하다고 볼 수 있다.
